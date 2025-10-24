@@ -1,12 +1,13 @@
 import pool from "../database/db.js";
 import bcrypt from "bcrypt";
+import generateToken from "../services/generate.token.js";
 
 export async function index(req, res) {
     try {
         const users = await pool.query("SELECT * FROM users");
 
         if(users.rows.length === 0) {
-            res.status(404).json({
+            res.status(400).json({
                 error: "Nenhum usuário localizado"
             })
         }
@@ -112,6 +113,42 @@ export async function show(req, res) {
         });
 
     } catch (error) {
-        res.status(500).json(error.message)
+        res.status(500).json(error.message);
+    }
+}
+
+export async function login(req, res) {
+    try {
+        const { name, password} = req.body;
+        
+        if(!name || !password) {
+            res.status(400).json({
+                error: "Não esqueça de informar todos os campos"
+            });
+        }
+        
+        const user = await pool.query(`
+            SELECT * FROM users WHERE name=$1    
+            `, [name]);
+            
+        const id = user.rows[0].id;
+        const isPasswordValid = await bcrypt.compare(password, user.rows[0].password);
+        
+        if(!isPasswordValid) {
+            res.status(401).json({
+                error: "Senha incorreta"
+            })
+        }
+
+        const token = generateToken(id, name);
+
+        res.status(200).json({
+            sucess: "Login efetuado com sucesso",
+            token
+        });
+
+    } catch (error) {
+        res.status(500).json(error.message);
+        
     }
 }

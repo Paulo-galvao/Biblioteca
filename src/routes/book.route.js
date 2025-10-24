@@ -1,20 +1,19 @@
 import express from "express";
+import authorization from "../middlewares/authorization.js";
 import {
     destroy,
     index,
     store,
     update,
-    show,
-    login
-} from '../controllers/user.controller.js'
+    show
+} from '../controllers/book.controller.js'
 
 const router = express.Router();
 
 router.get('/', index);
-router.post('/', store);
+router.post('/', authorization, store);
 router.put('/:id', update);
 router.delete('/:id', destroy);
 router.get('/:id', show);
-router.post('/login', login);
 
 export default router;
