@@ -4,20 +4,22 @@ import generateToken from "../services/generate.token.js";
 
 export async function index(req, res) {
     try {
-        const users = await pool.query("SELECT * FROM users");
+        const users = await pool.query("SELECT * FROM users ORDER BY id");
 
         if(users.rows.length === 0) {
-            res.status(400).json({
-                error: "Nenhum usuário localizado"
+            return res.status(400).json({
+                success: false,
+                message: "Nenhum usuário localizado"
             })
         }
 
-        res.status(200).json({
-            sucess: "Usuários ativos",
+        return res.status(200).json({
+            success: true,
+            message: "Usuários encontrados",
             data: users.rows
         });
     } catch (error) {
-        res.status(500).json(error.message);
+        return res.status(500).json(error.message);
         
     }
 }
@@ -27,24 +29,33 @@ export async function store(req, res) {
         const {name, password} = req.body;
 
         if(!name || !password) {
-            res.status(400).json({
-                error: "Não esqueça de informar todos os campos"
+            return res.status(400).json({
+                success: false,
+                message: "Não esqueça de informar todos os campos"
             })
         }
 
         const cryptPass = await bcrypt.hash(password, 10);
         
-        await pool.query(`
+        const user = await pool.query(`
             INSERT INTO users(name, password) VALUES($1, $2)     
         `, [name, cryptPass]);
+
+        if(user.rowCount === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Não foi possivel cadastrar um novo usuário"
+            });
+        }
              
-        res.status(201).json({
-            sucess: "Novo usuário cadastrado com sucesso"
+        return res.status(201).json({
+            sucess: true, 
+            message: "Novo usuário cadastrado com sucesso"
         }
         );
         } 
     catch (error) {
-        res.status(500).json(error.message);
+        return res.status(500).json(error.message);
     } 
 }
 
@@ -52,10 +63,19 @@ export async function update(req, res) {
     try {
         const { name, password }= req.body;
         const { id } = req.params;
+        const logged_id = req.userID;
+
+        if(id != logged_id) {
+            return res.status(403).json({
+                success: false,
+                message: "Somente o dono da conta pode alterar suas informações ou excluir conta"
+            })
+        }
 
         if(!name || !password) {
-            res.status(400).json({
-                error: "Não esqueça de informar todos os campos"
+            return res.status(400).json({
+                success: false,
+                message: "Não esqueça de informar todos os campos"
             });
         }
 
@@ -67,29 +87,39 @@ export async function update(req, res) {
             WHERE id=$3
         `, [name, cryptPass, id]);
 
-        res.status(200).json({
-            sucess: "Usuário atualizado com sucesso"
+        return res.status(200).json({
+            success: true,
+            message: "Usuário atualizado com sucesso"
         })
     } catch (error) {
-        res.status(500).json(error.message);
+        return res.status(500).json(error.message);
     }
 }
 
 export async function destroy(req, res) {
     try {
         const { id } = req.params;
+        const logged_id = req.userID;
+
+        if(id != logged_id) {
+            return res.status(403).json({
+                success: false,
+                message: "Somente o dono da conta pode alterar suas informações ou excluir conta"
+            })
+        }
 
         await pool.query(`
             DELETE FROM users
             WHERE id=$1    
         `, [id]);
 
-        res.status(200).json({
-            sucess: "Usuário excluído com sucesso"
+        return res.status(200).json({
+            sucess: true,
+            message: "Usuário excluído com sucesso"
         });
 
     } catch (error) {
-        res.status(500).json(error.message);
+        return res.status(500).json(error.message);
     }
 }
 
@@ -103,12 +133,14 @@ export async function show(req, res) {
             
         if(!user || id < 1) {
             return res.status(400).json({
-                error: "Usuário não localizado"
+                success: false,
+                message: "Usuário não localizado"
             })
         }
 
         return res.status(200).json({
-            sucess: "Usuário localizado",
+            success: true,
+            message: "Usuário localizado",
             data: user.rows
         });
 
@@ -119,36 +151,45 @@ export async function show(req, res) {
 
 export async function login(req, res) {
     try {
-        const { name, password} = req.body;
+        const { name, password } = req.body;
         
         if(!name || !password) {
-            res.status(400).json({
-                error: "Não esqueça de informar todos os campos"
+            return res.status(400).json({
+                success: false,
+                message: "Não esqueça de informar todos os campos"
             });
         }
         
         const user = await pool.query(`
             SELECT * FROM users WHERE name=$1    
             `, [name]);
+
+        if(user.rowCount === 0) {
+            return res.status(401).json({
+                success: false,
+                message: "Usuário não encontrado"
+            });
+        }
             
         const id = user.rows[0].id;
         const isPasswordValid = await bcrypt.compare(password, user.rows[0].password);
         
         if(!isPasswordValid) {
-            res.status(401).json({
+            return res.status(401).json({
                 error: "Senha incorreta"
             })
         }
 
         const token = generateToken(id, name);
 
-        res.status(200).json({
-            sucess: "Login efetuado com sucesso",
+        return res.status(200).json({
+            success: true,
+            message: "Login efetuado com sucesso",
             token
         });
 
     } catch (error) {
-        res.status(500).json(error.message);
+        return res.status(500).json(error.message);
         
     }
 }

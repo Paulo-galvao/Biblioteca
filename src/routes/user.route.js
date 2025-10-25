@@ -1,4 +1,5 @@
 import express from "express";
+import authorization from "../middlewares/authorization.js";
 import {
     destroy,
     index,
@@ -12,8 +13,8 @@ const router = express.Router();
 
 router.get('/', index);
 router.post('/', store);
-router.put('/:id', update);
-router.delete('/:id', destroy);
+router.put('/:id', authorization, update);
+router.delete('/:id', authorization, destroy);
 router.get('/:id', show);
 router.post('/login', login);
 
