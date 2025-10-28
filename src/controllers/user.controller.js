@@ -4,7 +4,7 @@ import generateToken from "../services/generate.token.js";
 
 export async function index(req, res) {
     try {
-        const users = await pool.query("SELECT * FROM users ORDER BY id");
+        const users = await pool.query("SELECT * FROM biblioteca.users ORDER BY id");
 
         if(users.rows.length === 0) {
             return res.status(400).json({
@@ -26,9 +26,9 @@ export async function index(req, res) {
 
 export async function store(req, res) {
     try {
-        const {name, password} = req.body;
+        const {name, username, password} = req.body;
 
-        if(!name || !password) {
+        if(!name || !username || !password ) {
             return res.status(400).json({
                 success: false,
                 message: "Não esqueça de informar todos os campos"
@@ -38,8 +38,8 @@ export async function store(req, res) {
         const cryptPass = await bcrypt.hash(password, 10);
         
         const user = await pool.query(`
-            INSERT INTO users(name, password) VALUES($1, $2)     
-        `, [name, cryptPass]);
+            INSERT INTO biblioteca.users(name, username, password) VALUES($1, $2, $3)     
+        `, [name, username, cryptPass]);
 
         if(user.rowCount === 0) {
             return res.status(400).json({
@@ -50,18 +50,16 @@ export async function store(req, res) {
              
         return res.status(201).json({
             sucess: true, 
-            message: "Novo usuário cadastrado com sucesso"
-        }
-        );
-        } 
-    catch (error) {
+            message: "Novo usuário cadastrado com sucesso",
+        });
+    } catch (error) {
         return res.status(500).json(error.message);
     } 
 }
 
 export async function update(req, res) {
     try {
-        const { name, password }= req.body;
+        const { name, username, password }= req.body;
         const { id } = req.params;
         const logged_id = req.userID;
 
@@ -72,7 +70,7 @@ export async function update(req, res) {
             })
         }
 
-        if(!name || !password) {
+        if(!name || !username || !password) {
             return res.status(400).json({
                 success: false,
                 message: "Não esqueça de informar todos os campos"
@@ -82,10 +80,10 @@ export async function update(req, res) {
         const cryptPass = await bcrypt.hash(password, 10);
 
         await pool.query(`
-            UPDATE users
-            SET name=$1, password=$2  
-            WHERE id=$3
-        `, [name, cryptPass, id]);
+            UPDATE biblioteca.users
+            SET name=$1, username=$2 password=$3  
+            WHERE id=$4
+        `, [name, username, cryptPass, id]);
 
         return res.status(200).json({
             success: true,
@@ -109,7 +107,7 @@ export async function destroy(req, res) {
         }
 
         await pool.query(`
-            DELETE FROM users
+            DELETE FROM biblioteca.users
             WHERE id=$1    
         `, [id]);
 
@@ -128,7 +126,7 @@ export async function show(req, res) {
         const { id } = req.params;
 
         const user = await pool.query(`
-            SELECT * FROM users WHERE id=$1    
+            SELECT * FROM biblioteca.users WHERE id=$1    
         `, [id]);
             
         if(!user || id < 1) {
@@ -161,7 +159,7 @@ export async function login(req, res) {
         }
         
         const user = await pool.query(`
-            SELECT * FROM users WHERE name=$1    
+            SELECT * FROM biblioteca.users WHERE name=$1    
             `, [name]);
 
         if(user.rowCount === 0) {
@@ -176,7 +174,8 @@ export async function login(req, res) {
         
         if(!isPasswordValid) {
             return res.status(401).json({
-                error: "Senha incorreta"
+                success: false,
+                message: "Senha incorreta"
             })
         }
 
