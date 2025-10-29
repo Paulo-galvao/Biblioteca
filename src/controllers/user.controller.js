@@ -37,22 +37,38 @@ export async function store(req, res) {
 
         const cryptPass = await bcrypt.hash(password, 10);
         
-        const user = await pool.query(`
+        const data = await pool.query(`
             INSERT INTO biblioteca.users(name, username, password) VALUES($1, $2, $3)     
         `, [name, username, cryptPass]);
+        
 
-        if(user.rowCount === 0) {
+        if(data.rowCount === 0) {
             return res.status(400).json({
                 success: false,
                 message: "Não foi possivel cadastrar um novo usuário"
             });
         }
+
+        const response = await pool.query(`
+            SELECT * FROM biblioteca.users WHERE username=$1    
+        `, [username]);
+
+        const user = await response.rows[0];
+
+        const token = generateToken(user.id, user.username);
              
         return res.status(201).json({
             sucess: true, 
             message: "Novo usuário cadastrado com sucesso",
+            token
         });
     } catch (error) {
+        if(error.code === '23505') {
+            return res.status(400).json({
+                sucess: false,
+                message: "O nome de usuário já está em uso"
+            })
+        }
         return res.status(500).json(error.message);
     } 
 }
@@ -190,5 +206,40 @@ export async function login(req, res) {
     } catch (error) {
         return res.status(500).json(error.message);
         
+    }
+}
+
+export async function dash(req, res) {
+    try {
+        const user_id = req.userID;
+
+    const response = await pool.query(
+      `
+            SELECT * FROM biblioteca.users WHERE id=$1    
+        `,
+      [user_id]
+    );
+
+    if (response.rowCount === 0) {
+      res.status(403).json({
+        success: false,
+        message: "Usuário não autorizado",
+      });
+    }
+
+    const user = response.rows[0];
+
+    res.status(200).json({
+      success: true,
+      logged: true,
+      message: "Usuário logado",
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username
+      }
+    });
+    } catch (error) {
+        return res.status(500).json(error.message);
     }
 }

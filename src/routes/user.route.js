@@ -6,7 +6,8 @@ import {
     store,
     update,
     show,
-    login
+    login,
+    dash
 } from '../controllers/user.controller.js'
 
 const router = express.Router();
@@ -15,7 +16,8 @@ router.get('/', index);
 router.post('/', store);
 router.put('/:id', authorization, update);
 router.delete('/:id', authorization, destroy);
-router.get('/:id', show);
 router.post('/login', login);
+router.get('/dashboard', authorization, dash);
+router.get('/:id', show);
 
 export default router;
