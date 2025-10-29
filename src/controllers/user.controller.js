@@ -159,7 +159,7 @@ export async function login(req, res) {
         }
         
         const user = await pool.query(`
-            SELECT * FROM biblioteca.users WHERE name=$1    
+            SELECT * FROM biblioteca.users WHERE username=$1    
             `, [username]);
 
         if(user.rowCount === 0) {
