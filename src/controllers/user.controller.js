@@ -149,9 +149,9 @@ export async function show(req, res) {
 
 export async function login(req, res) {
     try {
-        const { name, password } = req.body;
+        const { username, password } = req.body;
         
-        if(!name || !password) {
+        if(!username || !password) {
             return res.status(400).json({
                 success: false,
                 message: "Não esqueça de informar todos os campos"
@@ -160,7 +160,7 @@ export async function login(req, res) {
         
         const user = await pool.query(`
             SELECT * FROM biblioteca.users WHERE name=$1    
-            `, [name]);
+            `, [username]);
 
         if(user.rowCount === 0) {
             return res.status(401).json({
@@ -179,7 +179,7 @@ export async function login(req, res) {
             })
         }
 
-        const token = generateToken(id, name);
+        const token = generateToken(id, username);
 
         return res.status(200).json({
             success: true,
