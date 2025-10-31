@@ -213,17 +213,10 @@ export async function dash(req, res) {
     try {
         const user_id = req.userID;
 
-//         SELECT 
-        //   b.id AS book_id,
-        //   b.title,
-        //   u.name AS user_name
-        //   FROM books b
-        //   JOIN users u ON b.user_id = u.id
-        //   WHERE u.id = 5;
-
         const books = await pool.query(`
             SELECT 
                 u.id AS user_id,
+                b.id,
                 b.title,
                 b.written_by,
                 b.description,
@@ -241,39 +234,13 @@ export async function dash(req, res) {
             WHERE id=$1 
         `, [user_id]);
 
-        // const response = await pool.query(
-        // `
-        //         SELECT * FROM biblioteca.users WHERE id=$1    
-        //     `,
-        // [user_id]
-        // );
-
-        // if (response.rowCount === 0) {
-        // res.status(403).json({
-        //     success: false,
-        //     message: "Usuário não autorizado",
-        // });
-        // }
-
-        // const booksRes = pool.query(`
-        //     SELECT * FROM biblioteca.books WHERE user_id=$1
-        // `, [user_id])
-
-        // const user = response.rows[0];
-        // const books = (await booksRes).rows;
 
         res.status(200).json({
-        success: true,
-        logged: true,
-        message: "Usuário logado",
-        user: user.rows[0],
-        books: books.rows
-        // {
-        //     id: user.id,
-        //     name: user.name,
-        //     books,
-        //     username: user.username
-        // }
+            success: true,
+            logged: true,
+            message: "Usuário logado",
+            user: user.rows[0],
+            books: books.rows
         });
     } catch (error) {
         return res.status(500).json(error.message);

@@ -3,7 +3,7 @@ import pool from "../database/db.js";
 export async function index(req, res) {
   try {
     const books = await pool.query(`
-            SELECT * FROM books    
+            SELECT * FROM biblioteca.books    
         `);
 
     if (books.rows.length === 0) {
@@ -25,9 +25,12 @@ export async function show(req, res) {
   try {
     let { id } = req.params;
 
+    console.log(id);
+    
+
     const book = await pool.query(
       `
-            SELECT * FROM books WHERE id=$1    
+            SELECT * FROM biblioteca.books WHERE id=$1    
         `,
       [id]
     );
