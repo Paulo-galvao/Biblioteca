@@ -66,7 +66,7 @@ export async function store(req, res) {
 
     const book = await pool.query(
       `
-            INSERT INTO books(title, written_by, description, first_published, user_id, url_img)
+            INSERT INTO biblioteca.books(title, written_by, description, first_published, user_id, url_img)
             VALUES ($1, $2, $3, $4, $5, $6)    
         `,
       [title, written_by, description, first_published, user_id, url_img]
