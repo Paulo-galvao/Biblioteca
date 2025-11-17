@@ -7,17 +7,17 @@ export async function index(req, res) {
         `);
 
     if (books.rows.length === 0) {
-      res.status(400).json({
+      return res.status(400).json({
         error: "Nenhum item cadastrado",
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       sucess: "Livros cadastrados",
       data: books.rows,
     });
   } catch (error) {
-    res.status(500).json(error.message);
+    return res.status(500).json(error.message);
   }
 }
 
@@ -46,7 +46,7 @@ export async function show(req, res) {
       data: book.rows,
     });
   } catch (error) {
-    res.status(500).json(error.message);
+    return res.status(500).json(error.message);
   }
 }
 
@@ -58,7 +58,7 @@ export async function store(req, res) {
     const user_id = req.userID;
 
     if (!title || !written_by || !description || !first_published || !url_img) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "Não esqueça de preencher todos os campos",
       });
@@ -66,34 +66,114 @@ export async function store(req, res) {
 
     const book = await pool.query(
       `
-            INSERT INTO biblioteca.books(title, written_by, description, first_published, user_id, url_img)
+            INSERT INTO biblioteca.books
+              (title, written_by, description, first_published, user_id, url_img)
             VALUES ($1, $2, $3, $4, $5, $6)    
         `,
       [title, written_by, description, first_published, user_id, url_img]
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Item adicionado com successo",
       data: book.rows[0],
     });
   } catch (error) {
-    res.status(500).json(error.message);
+    return res.status(500).json(error.message);
   }
 }
 
 export async function update(req, res) {
   try {
-    
+    const book_id = req.params.id;
+    const user_id = req.userID;
+    const { title, written_by, description, first_published, url_img } =
+      req.body;
 
+    if (!title || !written_by || !description || !first_published || !url_img) {
+      return res.status(400).json({
+        success: false,
+        message: "Não esqueça de preencher todos os campos",
+      });
+    }
+
+    const response = await pool.query(`
+      SELECT * FROM biblioteca.books WHERE id=$1  
+    `, [book_id]);
+
+    const book = response.rows[0];
+
+    if(book.user_id !== user_id) {
+      return res.status(403).json({
+        success: false,
+        message: "Transição não autorizada. Usuário não é autor do post" 
+      });
+    }
+  
+    const bookResponse = await pool.query(`
+        UPDATE biblioteca.books
+	        SET title=$1,
+              written_by=$2,
+	            description=$3,
+	            first_published=$4, 
+	            url_img=$5
+        WHERE id=$6;
+    `,  [title, written_by, description, first_published, url_img, user_id]);
+
+      if(bookResponse.rowCount !== 1) {
+        return res.status(400).json({
+          success: false,
+          message: "Não foi possível completar a transição"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Atualizado com successo"
+    });
   } catch (error) {
-    res.status(500).json(error.message);
+    return res.status(500).json(error.message);
   }
 }
 
 export async function destroy(req, res) {
   try {
+    const user_id = req.userID;
+    const book_id = req.params.id;
+
+    const response = await pool.query(`
+      SELECT * FROM biblioteca.books 
+        WHERE id=$1  
+    `, [book_id]);
+
+    const book = response.rows[0];
+
+    if(book.user_id !== user_id) {
+      return res.status(403).json({
+        success: false,
+        message: "Transição não autorizada. Usuário não é autor do post" 
+      });
+    }
+
+    const bookResponse = await pool.query(`
+      DELETE FROM biblioteca.books 
+        WHERE id=$1
+    `, [book_id]);
+
+    if(bookResponse.rowCount !== 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Não foi possível completar a transição"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Exclusão confirmada com sucesso"
+    });
+
   } catch (error) {
-    res.status(500).json(error.message);
+    return res.status(500).json(error.message);
   }
 }
+
