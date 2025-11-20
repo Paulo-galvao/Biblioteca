@@ -38,10 +38,10 @@ export async function store(req, res) {
 	        biblioteca.books 
 	        Set rate= (
 		        Select 
-			    Sum(rate_value) / Count(rate_value) as media
-		        From biblioteca.rates 
-		    Where book_id = $1)
-        Where id=$2;    
+			        Sum(rate_value) / Count(rate_value) as media
+		          From biblioteca.rates 
+		      Where book_id = $1)
+          Where id=$2;    
     `, [book_id, book_id]);
     
 

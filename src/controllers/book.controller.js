@@ -118,8 +118,9 @@ export async function update(req, res) {
 	            first_published=$4, 
 	            url_img=$5
         WHERE id=$6;
-    `,  [title, written_by, description, first_published, url_img, user_id]);
+    `,  [title, written_by, description, first_published, url_img, book_id]);
 
+    console.log(bookResponse);
       if(bookResponse.rowCount !== 1) {
         return res.status(400).json({
           success: false,
@@ -127,6 +128,7 @@ export async function update(req, res) {
       });
     }
 
+    
     return res.status(200).json({
       success: true,
       message: "Atualizado com successo"
