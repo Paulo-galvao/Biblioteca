@@ -20,12 +20,29 @@ export async function store(req, res) {
     const rate = req.body.rate;
     const book_id = req.params.id;
     const user_id = req.userID;
+    let errors = [];
 
-    if(!rate) {
-        return res.status(400).json({
-            success: false,
-            message: "Valor de avaliação não informado"
-        })
+    const hasRate = await pool.query(`
+      SELECT * FROM biblioteca.rates WHERE user_id=$1 AND book_id=$2
+    `, [user_id, book_id]);
+
+    if(hasRate.rows.length !== 0) {
+      let message = "Esse livro já foi avaliado";
+      errors.push({message});
+    } 
+
+    if(rate === undefined) {
+        let message = "Valor de avaliação não informado"
+        errors.push({message});
+    }
+
+    if(rate < 0 || rate > 50) {
+        let message = "Valor de avaliação não pode ser menor que 0 ou maior que 50"
+        errors.push({message});
+    } 
+
+    if(errors.length > 0) {
+      return res.status(400).json(errors);
     }
 
     await pool.query(`
@@ -47,7 +64,7 @@ export async function store(req, res) {
 
     return res.status(201).json({
         success: true,
-        message: "Avaliação atualizada com sucesso"
+        message: "Avaliado com sucesso"
     });
 
 

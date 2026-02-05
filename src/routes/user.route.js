@@ -5,6 +5,7 @@ import {
     index,
     store,
     update,
+    resetPassword,
     show,
     login,
     dash
@@ -14,7 +15,8 @@ const router = express.Router();
 
 router.get('/', index);
 router.post('/', store);
-router.put('/:id', authorization, update);
+router.patch('/:id', authorization, update);
+router.patch('/resetPassword/:id', authorization, resetPassword)
 router.delete('/:id', authorization, destroy);
 router.post('/login', login);
 router.get('/dashboard', authorization, dash);

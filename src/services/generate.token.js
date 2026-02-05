@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 
-function generateToken(id, username) {
+function generateToken(id, email) {
     return jwt.sign(
-        {id, username},
+        {id, email},
         process.env.SECRET_KEY,
         {expiresIn: 86400}
     );
